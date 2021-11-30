@@ -17,7 +17,7 @@ struct timeDone_t
 struct conversion_statistics {
 	struct timeDone_t time;
 	int size;
-	int time_convert;
+	double time_convert;
 	int num_of_word_input;
 	int num_of_word_converted;
 	int num_of_word_error;
@@ -28,10 +28,43 @@ struct conversion_statistics {
 	char output_name[100];
 };
 
+int write_stat_file(struct conversion_statistics* stat)
+{
+	char buf[1000];
+	FILE* fp;
+	
+	sprintf(buf, "$%s,%s,%d,%d,%d,%d,%d,%d,%d,%lf$%d,%d,%d,%d,%d,%d\n", stat->input_name, stat->output_name, 
+	stat->size,stat->num_of_word_input,stat->num_of_word_converted,stat->num_of_word_error,stat->num_of_char,stat->num_of_char_converted,
+	stat->num_of_char_not_converted,stat->time_convert,stat->time.hour,stat->time.min,stat->time.second,stat->time.day,stat->time.month,stat->time.year);
+
+	printf("Stat buf: %s\n",buf);
+
+	fp = fopen("stat.txt", "w+");
+	if (!fp) {
+		printf("Error opening statistic file\n");
+		return -1;
+	}
+
+	fwrite(buf, strlen(buf)+1, 1, fp);
+	fclose(fp);
+	
+	return 0;
+}
+
 int get_statistics(struct conversion_statistics* stat, FILE* fp1, FILE* fp2)
 {
 	/* Implementing */
-	;
+	time_t rawtime;
+	struct tm *info;
+	
+	time(&rawtime);
+	info = gmtime(&rawtime);
+	stat->time.day = info->tm_mday;
+	stat->time.hour = info->tm_hour;
+	stat->time.min = info->tm_min;
+	stat->time.second = info->tm_sec;
+	stat->time.month = info->tm_mon + 1;
+	stat->time.year = info->tm_year;
 }
 
 void stat_display(struct conversion_statistics* stat)
@@ -39,7 +72,7 @@ void stat_display(struct conversion_statistics* stat)
 	printf("Input file: %s\n", stat->input_name);
 	printf("Output file: %s\n", stat->output_name);
 	printf("Time when the completion completed: %d:%d:%d  %d/%d/%d\n", stat->time.hour, stat->time.min, stat->time.second, stat->time.day, stat->time.month, stat->time.year);
-	printf("Duration of the conversion is %d seconds\n",stat->time_convert);
+	printf("Duration of the conversion is %lf seconds\n",stat->time_convert);
 	printf("Word count in input file: %d\n", stat->num_of_word_input);
 	printf("Word converted: %d\n", stat->num_of_word_converted);
 	printf("Word with errors: %d\n", stat->num_of_word_error);
@@ -79,11 +112,11 @@ void TexttoMorse(FILE *fp1, FILE *fp2, struct conversion_statistics* stat)
         fgets(sen,200,fp1);
         
 		n = strlen(sen);
-        printf("%c\n", sen[n-1]);
+        printf("%s\n", sen);
 		
-		if (sen[n-1] == ' ') {
-			printf("Find a space\n");
-			space_count++;
+		for (i = 0; i < n; i++) {
+			if (sen[i] == ' ')
+				space_count++;
 		}
 
 		if(sen[n-1]=='\n')
@@ -112,12 +145,14 @@ void TexttoMorse(FILE *fp1, FILE *fp2, struct conversion_statistics* stat)
 		}
 	}
 
+	printf("buf:%s\n",sen);
+
 	time_t end = time(NULL);
 
 	stat->num_of_char = n;
 	stat->num_of_char_converted = char_count;
 	stat->num_of_char_not_converted = n - char_count;
-	stat->time_convert = end - begin;
+	stat->time_convert = difftime(end, begin);
 	stat->num_of_word_converted = space_count + 1;
 	stat->num_of_word_input = space_count + 1;
 	stat->num_of_word_error = stat->num_of_word_input - stat->num_of_word_converted;
@@ -129,7 +164,7 @@ void TexttoMorse(FILE *fp1, FILE *fp2, struct conversion_statistics* stat)
 /*Ham chuyen tu ma morse ve chu*/
 void MorsetoText(FILE *fp1, FILE *fp2, struct conversion_statistics* stat)
 {
-	int i=0,j=0,k=0,n=0,a[100];
+	int i = 0, j = 0, k = 0, n = 0, a[100];
 	char *mor[44]={".-","-...","-.-.","-..",".","..-.","--.",
                 "....","..",".---","-.-",".-..","--","-.",
                 "---",".--.","--.-",".-.","...","-","..-",
@@ -145,29 +180,28 @@ void MorsetoText(FILE *fp1, FILE *fp2, struct conversion_statistics* stat)
 	/*Dich ma morse*/
 	while (!feof(fp1))
 	{
-		while(fgets (morse, 1000, fp1)!=NULL)
+		while(fgets (morse, 1000, fp1) != NULL)
     	{
-			while(morse[k]!='\0')     /*xac dinh va loai bo (\n)*/
+			while(morse[k] != '\0')     /*xac dinh va loai bo (\n)*/
 			{
-				if (morse[k]=='\n')
+				if (morse[k] == '\n')
 				{
-					morse[k]='/';
-					a[n]=k;
+					morse[k] = '/';
+					a[n] = k;
 					n++;
-					k=0;
+					k = 0;
 					break;
 				}
 				j=0; 
-				while(morse[k]!=' '&& morse[k]!='\0')   /*dich ma morse ve chu tuong ung*/
+				while(morse[k] != ' ' && morse[k] != '\0')   /*dich ma morse ve chu tuong ung*/
         		{
-            		substr[i][j]=morse[k];
+            		substr[i][j] = morse[k];
             		k++;
             		j++;
         		}
-       			substr[i][j]='\0';
+       			substr[i][j] = '\0';
         		i++;
-        		if(morse[k]!='\0')
-        		{
+        		if (morse[k] != '\0') {
             		k++;
        			}
 			
@@ -269,10 +303,11 @@ int Check(FILE *fp1, FILE *fp2,char fname1[], int c)
 
 int main(int argc, char* argv[])
 {
-	FILE *fp1, *fp2;
+	FILE *fp1, *fp2, *fpstat;
     char fname1[40], fname2[40];
     int cf=0, c=0, mofile=0;
 	char buffDebug[1000];
+	char buffStat[1000];
 	struct conversion_statistics stat1;
 
     if (strcmp(argv[1],"-h") == 0) {
@@ -283,7 +318,18 @@ int main(int argc, char* argv[])
         return 0;
     } else if (strcmp(argv[1],"-c") == 0) {
         printf("Showing statistics of the program\n");
-		get_statistics(&stat1, fp1, fp2);
+		fpstat = fopen("stat.txt", "r+");
+		if (!fpstat) {
+			printf("Error opening statistic file\n");
+			return -1;
+		}
+		
+		fread(buffStat, sizeof(buffStat), 1, fpstat);
+
+		printf("buff readed: %s\n", buffStat);
+
+		fclose(fpstat);
+		//get_statistics(&stat1, fp1, fp2);
 		stat_display(&stat1);
         return 0;
     } else if (strcmp(argv[3],"-t") == 0) {
@@ -307,7 +353,11 @@ int main(int argc, char* argv[])
 
 		TexttoMorse(fp1, fp2, &stat1);
 
+		get_statistics(&stat1, fp1, fp2);
+
 		stat_display(&stat1);
+
+		write_stat_file(&stat1);
 
 		return 0;
 	} else if (strcmp(argv[3],"-h") == 0) {
