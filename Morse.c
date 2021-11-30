@@ -14,6 +14,25 @@ struct timeDone_t
 	int year;
 };
 
+struct parsedBuff {
+	char size_buff[10];
+	char time_convert_buff[9];
+	char num_of_word_input_buff[10];
+	char num_of_word_converted_buff[10];
+	char num_of_word_error_buff[10];
+	char num_of_char_buff[10];
+	char num_of_char_converted_buff[10];
+	char num_of_char_not_converted_buff[10];
+	char input_name_buff[20];
+	char output_name_buff[20];
+	char hour_buff[4];
+	char min_buff[4];
+	char second_buff[4];
+	char day_buff[4];
+	char month_buff[4];
+	char year_buff[6];
+};
+
 struct conversion_statistics {
 	struct timeDone_t time;
 	int size;
@@ -28,12 +47,102 @@ struct conversion_statistics {
 	char output_name[100];
 };
 
+void parse_stat_file(char* buff, struct parsedBuff* pBuff)
+{
+	int index_of_comma[18];
+	int index_of_dollar[2];
+	int i = 0;
+	int j = 0;
+	int k = 0;
+
+	for (i = 0, j = 0, k = 0; i < strlen(buff); i++) {
+		if (buff[i] == '$') {
+			index_of_dollar[j] = i;
+			j++;
+		}
+		if (buff[i] == ',') {
+			index_of_comma[k] = i;
+			k++;
+		}
+	}
+
+	//for (k = 0; k < 18; k++) {
+	//	printf("%d\t", index_of_comma[k]);
+	//}
+
+	strncpy(pBuff->input_name_buff, buff + 1, index_of_comma[0] - index_of_dollar[0] - 1);
+	pBuff->input_name_buff[index_of_comma[0] - index_of_dollar[0] - 1] = '\0';
+	printf("Input file name: %s\n", pBuff->input_name_buff);
+
+	strncpy(pBuff->output_name_buff, buff + index_of_comma[0] + 1, index_of_comma[1] - index_of_comma[0] - 1);
+	pBuff->output_name_buff[index_of_comma[1] - index_of_comma[0] - 1] = '\0';
+	printf("Output file name: %s\n", pBuff->output_name_buff);
+
+	strncpy(pBuff->size_buff, buff + index_of_comma[1] + 1, index_of_comma[2] - index_of_comma[1] - 1);
+	pBuff->size_buff[index_of_comma[2] - index_of_comma[1] - 1] = '\0';
+	//printf("File size is %s\n", pBuff->size_buff);
+	
+	strncpy(pBuff->num_of_word_input_buff, buff + index_of_comma[2] + 1, index_of_comma[3] - index_of_comma[2] - 1);
+	pBuff->num_of_word_input_buff[index_of_comma[3] - index_of_comma[2] - 1] = '\0';
+	printf("Number of words input: %s\n", pBuff->num_of_word_input_buff);
+
+	strncpy(pBuff->num_of_word_converted_buff, buff + index_of_comma[3] + 1, index_of_comma[4] - index_of_comma[3] - 1);
+	pBuff->num_of_word_converted_buff[index_of_comma[4] - index_of_comma[3] - 1] = '\0';
+	printf("Number of words converted: %s\n", pBuff->num_of_word_converted_buff);
+
+	strncpy(pBuff->num_of_word_error_buff, buff + index_of_comma[4] + 1, index_of_comma[5] - index_of_comma[4] - 1);
+	pBuff->num_of_word_error_buff[index_of_comma[5] - index_of_comma[4] - 1] = '\0';
+	printf("Number of words with error: %s\n", pBuff->num_of_word_error_buff);
+
+	strncpy(pBuff->num_of_char_buff, buff + index_of_comma[5] + 1, index_of_comma[6] - index_of_comma[5] - 1);
+	pBuff->num_of_char_buff[index_of_comma[6] - index_of_comma[5] - 1] = '\0';
+	printf("Number of characters: %s\n", pBuff->num_of_char_buff);
+
+	strncpy(pBuff->num_of_char_converted_buff, buff + index_of_comma[6] + 1, index_of_comma[7] - index_of_comma[6] - 1);
+	pBuff->num_of_char_converted_buff[index_of_comma[7] - index_of_comma[6] - 1] = '\0';
+	printf("Number of characters converted: %s\n", pBuff->num_of_char_converted_buff);	
+
+	strncpy(pBuff->num_of_char_not_converted_buff, buff + index_of_comma[7] + 1, index_of_comma[8] - index_of_comma[7] - 1);
+	pBuff->num_of_char_not_converted_buff[index_of_comma[8] - index_of_comma[7] - 1] = '\0';
+	printf("Number of characters not converted: %s\n", pBuff->num_of_char_not_converted_buff);	
+
+	strncpy(pBuff->time_convert_buff, buff + index_of_comma[8] + 1, index_of_dollar[1] - index_of_comma[8] - 1);
+	pBuff->time_convert_buff[index_of_dollar[1] - index_of_comma[8] - 1] = '\0';
+	printf("Duration: %s seconds\n", pBuff->time_convert_buff);	
+
+	strncpy(pBuff->hour_buff, buff + index_of_dollar[1] + 1, index_of_comma[9] - index_of_dollar[1] - 1);
+	pBuff->hour_buff[index_of_comma[9] - index_of_dollar[1] - 1] = '\0';
+	printf("Hour: %s\n", pBuff->hour_buff);		
+
+	strncpy(pBuff->min_buff, buff + index_of_comma[9] + 1, index_of_comma[10] - index_of_comma[9] - 1);
+	pBuff->min_buff[index_of_comma[10] - index_of_comma[9] - 1] = '\0';
+	printf("Minute: %s\n", pBuff->min_buff);
+
+	strncpy(pBuff->second_buff, buff + index_of_comma[10] + 1, index_of_comma[11] - index_of_comma[10] - 1);
+	pBuff->second_buff[index_of_comma[11] - index_of_comma[10] - 1] = '\0';
+	printf("Second: %s\n", pBuff->second_buff);
+
+	strncpy(pBuff->day_buff, buff + index_of_comma[11] + 1, index_of_comma[12] - index_of_comma[11] - 1);
+	pBuff->day_buff[index_of_comma[12] - index_of_comma[11] - 1] = '\0';
+	printf("Day: %s\n", pBuff->day_buff);
+
+	strncpy(pBuff->month_buff, buff + index_of_comma[12] + 1, index_of_comma[13] - index_of_comma[12] - 1);
+	pBuff->month_buff[index_of_comma[13] - index_of_comma[12] - 1] = '\0';
+	printf("Month: %s\n", pBuff->month_buff);
+
+	strncpy(pBuff->year_buff, buff + index_of_comma[13] + 1, 4);
+	pBuff->year_buff[4] = '\0';
+	printf("Year: %s\n", pBuff->year_buff);
+
+	printf("Time when the completion completed: %s:%s:%s  %s/%s/%s\n", pBuff->hour_buff, pBuff->min_buff, pBuff->second_buff, pBuff->day_buff, pBuff->month_buff, pBuff->year_buff);
+}
+
 int write_stat_file(struct conversion_statistics* stat)
 {
 	char buf[1000];
 	FILE* fp;
 	
-	sprintf(buf, "$%s,%s,%d,%d,%d,%d,%d,%d,%d,%lf$%d,%d,%d,%d,%d,%d\n", stat->input_name, stat->output_name, 
+	sprintf(buf, "$%s,%s,%d,%d,%d,%d,%d,%d,%d,%lf$%d,%d,%d,%d,%d,%d", stat->input_name, stat->output_name, 
 	stat->size,stat->num_of_word_input,stat->num_of_word_converted,stat->num_of_word_error,stat->num_of_char,stat->num_of_char_converted,
 	stat->num_of_char_not_converted,stat->time_convert,stat->time.hour,stat->time.min,stat->time.second,stat->time.day,stat->time.month,stat->time.year);
 
@@ -45,7 +154,7 @@ int write_stat_file(struct conversion_statistics* stat)
 		return -1;
 	}
 
-	fwrite(buf, strlen(buf)+1, 1, fp);
+	fwrite(buf, strlen(buf), 1, fp);
 	fclose(fp);
 	
 	return 0;
@@ -58,13 +167,14 @@ int get_statistics(struct conversion_statistics* stat, FILE* fp1, FILE* fp2)
 	struct tm *info;
 	
 	time(&rawtime);
+
 	info = gmtime(&rawtime);
 	stat->time.day = info->tm_mday;
 	stat->time.hour = info->tm_hour;
 	stat->time.min = info->tm_min;
 	stat->time.second = info->tm_sec;
 	stat->time.month = info->tm_mon + 1;
-	stat->time.year = info->tm_year;
+	stat->time.year = 2000 + info->tm_year - 100 ;
 }
 
 void stat_display(struct conversion_statistics* stat)
@@ -125,10 +235,10 @@ void TexttoMorse(FILE *fp1, FILE *fp2, struct conversion_statistics* stat)
 			k=n-1;
 		} 
     	
-		for (i=0;i<200;i++)
+		for (i = 0; i < 200; i++)
     	{
     		//sen[i]= toupper(sen[i]);
-    		for (j=0;j<43;j++)
+    		for (j = 0; j < 43; j++)
     		{
 				if (sen[i] == tex[36][0] && i==k)
 				{
@@ -204,7 +314,6 @@ void MorsetoText(FILE *fp1, FILE *fp2, struct conversion_statistics* stat)
         		if (morse[k] != '\0') {
             		k++;
        			}
-			
 			}
 		}
 	}
@@ -309,6 +418,7 @@ int main(int argc, char* argv[])
 	char buffDebug[1000];
 	char buffStat[1000];
 	struct conversion_statistics stat1;
+	struct parsedBuff parseString;
 
     if (strcmp(argv[1],"-h") == 0) {
         printf("!!!!!USER GUIDE OF THE PROGRAM!!!!!!\n");
@@ -328,13 +438,15 @@ int main(int argc, char* argv[])
 
 		printf("buff readed: %s\n", buffStat);
 
+		parse_stat_file(buffStat, &parseString);
+
 		fclose(fpstat);
 		//get_statistics(&stat1, fp1, fp2);
-		stat_display(&stat1);
+		//stat_display(&stat1);
         return 0;
     } else if (strcmp(argv[3],"-t") == 0) {
-		fp1 = fopen(argv[1], "r");
-		fp2 = fopen(argv[2], "w");
+		fp1 = fopen(argv[1], "r+");
+		fp2 = fopen(argv[2], "w+");
 		
 		strcpy(stat1.input_name, argv[1]);
 		strcpy(stat1.output_name, argv[2]);
@@ -361,8 +473,8 @@ int main(int argc, char* argv[])
 
 		return 0;
 	} else if (strcmp(argv[3],"-h") == 0) {
-		fp1 = fopen(argv[1], "r");
-		fp2 = fopen(argv[2], "w");
+		fp1 = fopen(argv[1], "r+");
+		fp2 = fopen(argv[2], "w+");
 
 		strcpy(stat1.input_name, argv[1]);
 		strcpy(stat1.output_name, argv[2]);
