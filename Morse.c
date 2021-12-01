@@ -286,6 +286,10 @@ void MorsetoText(FILE *fp1, FILE *fp2, struct conversion_statistics* stat)
                "p","q","r","s","t","u","v","w","x","y","z","0","1","2","3",
                 "4","5","6","7","8","9"," ",".",",","?",":","-","#","*"};
     char morse[1000]={ }, substr[1000][100]={ };
+	int char_count = 0;
+	int word_count = 0;
+
+	time_t begin = time(NULL);
     
 	/*Dich ma morse*/
 	while (!feof(fp1))
@@ -303,6 +307,10 @@ void MorsetoText(FILE *fp1, FILE *fp2, struct conversion_statistics* stat)
 					break;
 				}
 				j=0; 
+
+				if (morse[k] == '/') 
+					word_count++;
+
 				while(morse[k] != ' ' && morse[k] != '\0')   /*dich ma morse ve chu tuong ung*/
         		{
             		substr[i][j] = morse[k];
@@ -328,10 +336,18 @@ void MorsetoText(FILE *fp1, FILE *fp2, struct conversion_statistics* stat)
    			{
     			printf("%s",tex[j]);
     			fprintf(fp2, "%s",tex[j]);
+				char_count++;
 				break;	
     		}
 		}
   	}
+
+	time_t end = time(NULL);
+
+	stat->num_of_char = len;
+	stat->num_of_char_converted = char_count;
+	stat->num_of_char_not_converted = len - char_count;
+
   	fclose(fp1);
   	fclose(fp2);
 }
