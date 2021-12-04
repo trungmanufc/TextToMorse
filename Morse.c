@@ -439,7 +439,7 @@ int main(int argc, char* argv[])
     if (strcmp(argv[1],"-h") == 0) {
         printf("!!!!!USER GUIDE OF THE PROGRAM!!!!!!\n");
         printf("Steps 1: \n1. Open the command line and type the argument:\n\tIf you want to convert text to morse, type '-t'");
-        printf("\n\tIf you want to convert morse to text, type '-m'\n\tIf you want to show the statistic, type '-c'");
+        printf("\n\tIf you want to convert morse to text, type '-m'\n\tIf you want to show the statistic, type '-c'\n");
         
         return 0;
     } else if (strcmp(argv[1],"-c") == 0) {
