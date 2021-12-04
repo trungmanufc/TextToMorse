@@ -3,6 +3,7 @@
 #include<ctype.h>
 #include<stdlib.h>
 #include<time.h>
+#include <sys/stat.h>
 
 struct timeDone_t
 {
@@ -160,7 +161,7 @@ int write_stat_file(struct conversion_statistics* stat)
 	return 0;
 }
 
-int get_statistics(struct conversion_statistics* stat, FILE* fp1, FILE* fp2)
+int get_statistics(struct conversion_statistics* stat)
 {
 	/* Implementing */
 	time_t rawtime;
@@ -247,7 +248,6 @@ void TexttoMorse(FILE *fp1, FILE *fp2, struct conversion_statistics* stat)
 				}
 				if (sen[i] == tex[j][0])
     			{
-					//printf("%s ", mor[j]);
 					fprintf(fp2, "%s ", mor[j]);
 					char_count++;
  				} 
@@ -259,6 +259,9 @@ void TexttoMorse(FILE *fp1, FILE *fp2, struct conversion_statistics* stat)
 
 	time_t end = time(NULL);
 
+	fseek(fp2, 0, SEEK_END);
+	
+	stat->size = ftell(fp2);
 	stat->num_of_char = n;
 	stat->num_of_char_converted = char_count;
 	stat->num_of_char_not_converted = n - char_count;
@@ -288,6 +291,7 @@ void MorsetoText(FILE *fp1, FILE *fp2, struct conversion_statistics* stat)
     char morse[1000]={ }, substr[1000][100]={ };
 	int char_count = 0;
 	int word_count = 0;
+	long file_size;
 
 	time_t begin = time(NULL);
     
@@ -344,9 +348,16 @@ void MorsetoText(FILE *fp1, FILE *fp2, struct conversion_statistics* stat)
 
 	time_t end = time(NULL);
 
+	fseek(fp2, 0, SEEK_END);
+
+	stat->size = ftell(fp2);
 	stat->num_of_char = len;
 	stat->num_of_char_converted = char_count;
 	stat->num_of_char_not_converted = len - char_count;
+	stat->num_of_word_input = word_count + 1;
+	stat->num_of_word_converted = word_count + 1;
+	stat->num_of_word_error = stat->num_of_word_input - stat->num_of_word_converted;
+	stat->time_convert = difftime(end, begin);
 
   	fclose(fp1);
   	fclose(fp2);
@@ -411,7 +422,7 @@ int Check(FILE *fp1, FILE *fp2,char fname1[], int c)
 		for (i=0;i<n;i++)
     	{
     		str[i]= toupper(str[i]);
-    		for (j=0;j<40;j++)
+    		for (j = 0; j < 40; j++)
     		{
 				if (str[i] == tex[j][0])
     			{
@@ -481,7 +492,7 @@ int main(int argc, char* argv[])
 
 		TexttoMorse(fp1, fp2, &stat1);
 
-		get_statistics(&stat1, fp1, fp2);
+		get_statistics(&stat1);
 
 		stat_display(&stat1);
 
@@ -504,7 +515,11 @@ int main(int argc, char* argv[])
 
 		MorsetoText(fp1, fp2, &stat1);
 
+		get_statistics(&stat1);
+
 		stat_display(&stat1);
+
+		write_stat_file(&stat1);
 
 		return 0;
 	} else {
